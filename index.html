@@ -72,11 +72,13 @@ const {useState,useEffect,useMemo,useRef}=React;
 const html=htm.bind(React.createElement);
 const KEY="notes.v1";
 const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(d))return d.map(n=>({id:n.id,title:n.title||"",body:n.body||"",html:n.html!=null?n.html:esc(n.body||"").replace(/\n/g,"<br>"),updated:n.updated||Date.now()}))}catch(e){}return[]}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(d))return d.map(n=>({id:n.id,title:n.title||"",body:n.body||"",html:n.html!=null?n.html:esc(n.body||"").replace(/\n/g,"<br>"),updated:n.updated||Date.now(),auto:n.auto||""}))}catch(e){}return[]}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const blank=()=>({id:uid(),title:"",body:"",html:"",updated:Date.now()});
+const MON=["Jan.","Feb.","Mar.","Apr.","May","Jun.","Jul.","Aug.","Sep.","Oct.","Nov.","Dec."];
+const dateTitle=()=>{const d=new Date();return MON[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear()};
+const blank=()=>{const t=dateTitle();return {id:uid(),title:t,auto:t,body:"",html:"",updated:Date.now()}};
 const byNew=(a,b)=>b.updated-a.updated;
-const isBlank=n=>!n.title.trim()&&!n.body.trim();
+const isBlank=n=>!n.body.trim()&&(!n.title.trim()||n.title===n.auto);
 function fmt(t){const d=new Date(t),n=new Date();
   if(d.toDateString()===n.toDateString())return d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
   return d.toLocaleDateString([],{month:"short",day:"numeric",year:d.getFullYear()===n.getFullYear()?undefined:"numeric"})}
@@ -163,7 +165,7 @@ function App(){
     setConfirm(false);setHist(false);
     if(isBlank(active)){titleRef.current&&titleRef.current.focus();return}
     const n=blank();setNotes(ns=>[n,...ns]);setActive(n.id);
-    setTimeout(()=>titleRef.current&&titleRef.current.focus(),30);
+    setTimeout(()=>edRef.current&&edRef.current.focus(),30);
   }
   function open(id){setConfirm(false);setHist(false);if(id!==activeId){prune(id);setActive(id)}}
   function del(id){
